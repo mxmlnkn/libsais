@@ -11291,33 +11291,28 @@ static void libsais_unbwt_calculate_biPSI_marks_symbol_rows(const uint8_t * REST
             fast_sint_t e = i + LIBSAIS_UNBWT_RUN_LANES;
             if ((fast_uint_t)e <= mark_row)
             {
-                for (; i < e; i += 4)
+                /* The stores are delayed by half a group so that each cache line is requested early
+                 * and the dependent bucket loads of the following elements overlap the store misses. */
+                sa_uint_t destinations[LIBSAIS_UNBWT_RUN_LANES], values[LIBSAIS_UNBWT_RUN_LANES];
+                fast_sint_t k;
+#if defined(__GNUC__) || defined(__clang__)
+                #pragma GCC unroll 16
+#endif
+                for (k = 0; k < LIBSAIS_UNBWT_RUN_LANES; ++k)
                 {
-                    {
-                        fast_uint_t c = T[i + 0];
-                        fast_uint_t p = bucket1[c]++;
-                        fast_sint_t t = (fast_sint_t)(index - p);
-                        if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; P[bucket2[w]++] = (sa_uint_t)(((fast_uint_t)(i + 0) << 8) + c); }
-                    }
-                    {
-                        fast_uint_t c = T[i + 1];
-                        fast_uint_t p = bucket1[c]++;
-                        fast_sint_t t = (fast_sint_t)(index - p);
-                        if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; P[bucket2[w]++] = (sa_uint_t)(((fast_uint_t)(i + 1) << 8) + c); }
-                    }
-                    {
-                        fast_uint_t c = T[i + 2];
-                        fast_uint_t p = bucket1[c]++;
-                        fast_sint_t t = (fast_sint_t)(index - p);
-                        if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; P[bucket2[w]++] = (sa_uint_t)(((fast_uint_t)(i + 2) << 8) + c); }
-                    }
-                    {
-                        fast_uint_t c = T[i + 3];
-                        fast_uint_t p = bucket1[c]++;
-                        fast_sint_t t = (fast_sint_t)(index - p);
-                        if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; P[bucket2[w]++] = (sa_uint_t)(((fast_uint_t)(i + 3) << 8) + c); }
-                    }
+                    fast_uint_t c = T[i + k];
+                    fast_uint_t p = bucket1[c]++;
+                    fast_sint_t t = (fast_sint_t)(index - p);
+                    fast_uint_t d = 0, v = 0;
+                    if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; d = bucket2[w]++; v = (sa_uint_t)(((fast_uint_t)(i + k) << 8) + c); libsais_prefetchw(&P[d]); }
+                    destinations[k] = d; values[k] = v;
+                    if (k >= LIBSAIS_UNBWT_RUN_LANES / 2 && destinations[k - LIBSAIS_UNBWT_RUN_LANES / 2] != 0) { P[destinations[k - LIBSAIS_UNBWT_RUN_LANES / 2]] = values[k - LIBSAIS_UNBWT_RUN_LANES / 2]; }
                 }
+#if defined(__GNUC__) || defined(__clang__)
+                #pragma GCC unroll 8
+#endif
+                for (k = LIBSAIS_UNBWT_RUN_LANES / 2; k < LIBSAIS_UNBWT_RUN_LANES; ++k) { if (destinations[k] != 0) { P[destinations[k]] = values[k]; } }
+                i = e;
             }
             else
             {
@@ -11400,33 +11395,26 @@ static void libsais_unbwt_calculate_biPSI_marks_symbol_rows(const uint8_t * REST
             fast_sint_t e = i + LIBSAIS_UNBWT_RUN_LANES;
             if ((fast_uint_t)e <= mark_row)
             {
-                for (; i < e; i += 4)
+                sa_uint_t destinations[LIBSAIS_UNBWT_RUN_LANES], values[LIBSAIS_UNBWT_RUN_LANES];
+                fast_sint_t k;
+#if defined(__GNUC__) || defined(__clang__)
+                #pragma GCC unroll 16
+#endif
+                for (k = 0; k < LIBSAIS_UNBWT_RUN_LANES; ++k)
                 {
-                    {
-                        fast_uint_t c = T[i + 0 - 1];
-                        fast_uint_t p = bucket1[c]++;
-                        fast_sint_t t = (fast_sint_t)(index - p);
-                        if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; P[bucket2[w]++] = (sa_uint_t)(((fast_uint_t)(i + 0) << 8) + c); }
-                    }
-                    {
-                        fast_uint_t c = T[i + 1 - 1];
-                        fast_uint_t p = bucket1[c]++;
-                        fast_sint_t t = (fast_sint_t)(index - p);
-                        if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; P[bucket2[w]++] = (sa_uint_t)(((fast_uint_t)(i + 1) << 8) + c); }
-                    }
-                    {
-                        fast_uint_t c = T[i + 2 - 1];
-                        fast_uint_t p = bucket1[c]++;
-                        fast_sint_t t = (fast_sint_t)(index - p);
-                        if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; P[bucket2[w]++] = (sa_uint_t)(((fast_uint_t)(i + 2) << 8) + c); }
-                    }
-                    {
-                        fast_uint_t c = T[i + 3 - 1];
-                        fast_uint_t p = bucket1[c]++;
-                        fast_sint_t t = (fast_sint_t)(index - p);
-                        if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; P[bucket2[w]++] = (sa_uint_t)(((fast_uint_t)(i + 3) << 8) + c); }
-                    }
+                    fast_uint_t c = T[i + k - 1];
+                    fast_uint_t p = bucket1[c]++;
+                    fast_sint_t t = (fast_sint_t)(index - p);
+                    fast_uint_t d = 0, v = 0;
+                    if (t != 0) { fast_uint_t w = (((fast_uint_t)T[p + (fast_uint_t)(t >> ((sizeof(fast_sint_t) * 8) - 1))]) << 8) + c; d = bucket2[w]++; v = (sa_uint_t)(((fast_uint_t)(i + k) << 8) + c); libsais_prefetchw(&P[d]); }
+                    destinations[k] = d; values[k] = v;
+                    if (k >= LIBSAIS_UNBWT_RUN_LANES / 2 && destinations[k - LIBSAIS_UNBWT_RUN_LANES / 2] != 0) { P[destinations[k - LIBSAIS_UNBWT_RUN_LANES / 2]] = values[k - LIBSAIS_UNBWT_RUN_LANES / 2]; }
                 }
+#if defined(__GNUC__) || defined(__clang__)
+                #pragma GCC unroll 8
+#endif
+                for (k = LIBSAIS_UNBWT_RUN_LANES / 2; k < LIBSAIS_UNBWT_RUN_LANES; ++k) { if (destinations[k] != 0) { P[destinations[k]] = values[k]; } }
+                i = e;
             }
             else
             {
