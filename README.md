@@ -25,9 +25,22 @@ The libsais is released under the [Apache License Version 2.0 with LLVM Exceptio
 ## Multi-threading
 The libsais is memory-bound, so performance scales primarily with memory bandwidth and concurrency, not raw compute. The optimal number of threads for suffix array construction depends on CPU and memory architecture, as different systems (DDR4 vs DDR5, Intel vs AMD, single- vs multi-CCD) saturate memory at different points with maximum throughput generally following the number of memory channels rather than total core count. The x86-64 dual-channel systems typically saturate near 8 threads, but in practice may show good scaling at 6, 12 or even 16 threads.
 
+> * An OMP_STACKSIZE below 32K is not supported.
+> * Inverse BWT uses the requested number of threads, as suffix array construction does; if the operating system cannot create them (e.g. under a per-user process limit), the OpenMP runtime ends the program.
+> * In libsais64 and libsais16x64, the number of threads must be from 0 to INT_MAX; a larger number returns -1.
+> * If an input symbol frequency table (freq) is given to inverse BWT, it must match the symbol counts of the BWT string, as single-threaded calls use it without checking.
+> * With MinGW (libgomp), a very large number of threads can overflow the main thread's stack, and long runs of nested calls with many threads can exhaust the process's handles, as libgomp leaks one for each blocked thread of a nested team.
+
 ## Changes
 _For the full changelog, see [CHANGES](CHANGES)._
 
+* November 9, 2026 (2.12.2)
+  * Improved performance of suffix array and Burrows-Wheeler transform construction and of the inverse Burrows-Wheeler transform, both single- and multi-threaded.
+  * Fixed a hang at process exit with MinGW (libgomp) after a multi-threaded inverse BWT: inverse BWT now uses the requested number of threads in every parallel region, as suffix array construction does.
+  * libsais64 and libsais16x64 now return -1 for a thread count above INT_MAX.
+  * Fixed out-of-bounds writes in libsais64 and libsais16x64 with thread counts of 2^32 or more in 32-bit builds.
+  * Worked around a GCC issue that made AVX-512 builds fault under AddressSanitizer.
+  * Resolved compiler warnings under -Wstrict-aliasing=1 and -Wconversion.
 * October 21, 2026 (2.12.1)
   * Fixed compilation errors and warnings with MSVC for ARM64 and ARM64EC targets.
   * Fixed incorrect results on big-endian AArch64 targets, and of libsais64 and libsais16x64 on all big-endian targets.
@@ -131,7 +144,7 @@ _For the full changelog, see [CHANGES](CHANGES)._
 CPMAddPackage(
   NAME libsais
   GITHUB_REPOSITORY IlyaGrebnov/libsais
-  GIT_TAG v2.12.1
+  GIT_TAG v2.12.2
   OPTIONS
     "LIBSAIS_USE_OPENMP OFF"
     "LIBSAIS_BUILD_SHARED_LIB OFF"
