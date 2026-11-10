@@ -61,8 +61,12 @@ typedef size_t                          fast_uint_t;
 #define UNBWT_CHAIN_THREADS_MIN_SIZE    (262144)
 #define UNBWT_CHAIN_MIN_SIZE_AUX        (1048576)
 #define UNBWT_CHAIN_ANY_BLOCKS_MIN_SIZE (33554432)
+#ifndef UNBWT_CHUNK_SIZE
 #define UNBWT_CHUNK_SIZE                (8160)
+#endif
+#ifndef UNBWT_CHUNK_SIZE_SMALL
 #define UNBWT_CHUNK_SIZE_SMALL          (4080)
+#endif
 #define UNBWT_DECODE_12_MIN_SIZE        (262144)
 #define UNBWT_DECODE_16_MIN_SIZE        (8388608)
 #define UNBWT_PACKED_MAX_SIZE           (65535)
